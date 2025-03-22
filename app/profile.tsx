@@ -34,15 +34,15 @@ const PROFILE_OPTIONS = [
 
 export default function Profile() {
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-primary">
       {/* Profile Header */}
-      <View className="bg-white p-4 border-b border-gray-200">
+      <View className="bg-surface p-4 border-b border-primary-dark">
         <View className="items-center">
-          <View className="w-24 h-24 rounded-full bg-blue-100 items-center justify-center mb-4">
-            <FontAwesome name="user" size={48} color="#3b82f6" />
+          <View className="w-24 h-24 rounded-full bg-accent/20 items-center justify-center mb-4">
+            <FontAwesome name="user" size={48} color="#22c55e" />
           </View>
-          <Text className="text-2xl font-bold text-gray-900">John Doe</Text>
-          <Text className="text-gray-600">Fitness Enthusiast</Text>
+          <Text className="text-2xl font-bold text-white">John Doe</Text>
+          <Text className="text-gray-300">Fitness Enthusiast</Text>
         </View>
       </View>
 
@@ -51,24 +51,28 @@ export default function Profile() {
         {PROFILE_OPTIONS.map((section) => (
           <View key={section.title} className="mb-6">
             <View className="flex-row items-center mb-4">
-              <FontAwesome name={section.icon} size={20} color="#3b82f6" />
-              <Text className="text-lg font-semibold text-gray-900 ml-2">
+              <FontAwesome
+                name={section.icon as 'user' | 'cog'}
+                size={20}
+                color="#22c55e"
+              />
+              <Text className="text-lg font-semibold text-white ml-2">
                 {section.title}
               </Text>
             </View>
-            <View className="bg-white rounded-xl overflow-hidden">
+            <View className="bg-surface rounded-xl overflow-hidden">
               {section.items.map((item, index) => (
                 <TouchableOpacity
                   key={item.label}
                   className={`flex-row items-center justify-between p-4 ${
                     index !== section.items.length - 1
-                      ? 'border-b border-gray-100'
+                      ? 'border-b border-primary-dark'
                       : ''
                   }`}
                 >
-                  <Text className="text-gray-900">{item.label}</Text>
+                  <Text className="text-white">{item.label}</Text>
                   <View className="flex-row items-center">
-                    <Text className="text-gray-600 mr-2">{item.value}</Text>
+                    <Text className="text-gray-300 mr-2">{item.value}</Text>
                     {item.value && (
                       <FontAwesome
                         name="chevron-right"

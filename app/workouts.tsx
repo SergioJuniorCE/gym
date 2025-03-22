@@ -27,11 +27,11 @@ const SAMPLE_WORKOUTS = [
 
 export default function Workouts() {
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-primary">
       {/* Header */}
-      <View className="p-4 bg-white border-b border-gray-200">
-        <Text className="text-2xl font-bold text-gray-900">Workouts</Text>
-        <Text className="text-gray-600">Manage your workout routines</Text>
+      <View className="p-4 bg-surface border-b border-primary-dark">
+        <Text className="text-2xl font-bold text-white">Workouts</Text>
+        <Text className="text-gray-300">Manage your workout routines</Text>
       </View>
 
       {/* Workout List */}
@@ -39,19 +39,19 @@ export default function Workouts() {
         {SAMPLE_WORKOUTS.map((workout) => (
           <TouchableOpacity
             key={workout.id}
-            className="bg-white rounded-xl p-4 mb-4 shadow-sm"
+            className="bg-surface rounded-xl p-4 mb-4 shadow-sm"
           >
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-lg font-semibold text-gray-900">
+                <Text className="text-lg font-semibold text-white">
                   {workout.name}
                 </Text>
-                <Text className="text-gray-600">
+                <Text className="text-gray-300">
                   {workout.exercises} exercises • {workout.duration}
                 </Text>
               </View>
-              <View className="bg-blue-100 px-3 py-1 rounded-full">
-                <Text className="text-blue-600 font-medium capitalize">
+              <View className="bg-accent/20 px-3 py-1 rounded-full">
+                <Text className="text-accent font-medium capitalize">
                   {workout.type}
                 </Text>
               </View>
@@ -61,7 +61,7 @@ export default function Workouts() {
       </ScrollView>
 
       {/* Add Workout Button */}
-      <TouchableOpacity className="absolute bottom-6 right-6 bg-blue-500 w-14 h-14 rounded-full items-center justify-center shadow-lg">
+      <TouchableOpacity className="absolute bottom-6 right-6 bg-accent w-14 h-14 rounded-full items-center justify-center shadow-lg">
         <FontAwesome name="plus" size={24} color="white" />
       </TouchableOpacity>
     </View>

@@ -6,8 +6,19 @@ export default function RootLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#3b82f6', // blue-500
+        tabBarActiveTintColor: '#22c55e', // accent
         tabBarInactiveTintColor: '#6b7280', // gray-500
+        tabBarStyle: {
+          backgroundColor: '#1a1a2e', // primary
+          borderTopColor: '#2d2d44', // primary-light
+        },
+        headerStyle: {
+          backgroundColor: '#1a1a2e', // primary
+        },
+        headerTintColor: '#ffffff',
+        headerTitleStyle: {
+          color: '#ffffff',
+        },
       }}
     >
       <Tabs.Screen
