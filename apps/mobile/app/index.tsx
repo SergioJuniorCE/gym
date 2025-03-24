@@ -1,57 +1,94 @@
-import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import React from 'react';
+import { Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { api } from '../src/lib/api';
+import { useEffect, useState } from 'react';
 
-export default function Index() {
+export default function Home() {
+  const router = useRouter();
+  const [todaysWorkout, setTodaysWorkout] = useState<any>(null);
+
+  useEffect(() => {
+    loadTodaysWorkout();
+  }, []);
+
+  const loadTodaysWorkout = async () => {
+    try {
+      const workouts = await api.getWorkouts();
+      // For now, just use the first workout as today's workout
+      if (workouts.length > 0) {
+        setTodaysWorkout(workouts[0]);
+      }
+    } catch (error) {
+      console.error("Failed to load today's workout:", error);
+    }
+  };
+
+  const startWorkout = () => {
+    if (todaysWorkout) {
+      router.push(`/workout?id=${todaysWorkout.id}`);
+    }
+  };
+
   return (
-    <ScrollView className="flex-1 bg-primary">
-      <View className="p-4">
-        {/* Welcome Section */}
-        <View className="mb-6">
-          <Text className="text-2xl font-bold text-white">Welcome back!</Text>
-          <Text className="text-gray-300">Let's crush today's workout 💪</Text>
-        </View>
-
-        {/* Today's Workout Card */}
-        <View className="bg-surface rounded-xl p-4 shadow-sm mb-6">
-          <Text className="text-lg font-semibold text-white mb-2">
-            Today's Workout
-          </Text>
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-gray-300">Upper Body Strength</Text>
-              <Text className="text-sm text-gray-400">
-                8 exercises • 45 min
-              </Text>
-            </View>
-            <TouchableOpacity className="bg-accent px-4 py-2 rounded-lg">
-              <Text className="text-white font-medium">Start</Text>
-            </TouchableOpacity>
+    <View className="flex-1 bg-primary">
+      {/* Header */}
+      <View className="p-4 bg-surface border-b border-primary-dark">
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-2xl font-bold text-white">Welcome back!</Text>
+            <Text className="text-gray-300">Let's crush today's workout</Text>
           </View>
-        </View>
-
-        {/* Quick Actions */}
-        <Text className="text-lg font-semibold text-white mb-4">
-          Quick Actions
-        </Text>
-        <View className="flex-row flex-wrap gap-4">
-          <TouchableOpacity className="bg-surface p-4 rounded-xl shadow-sm w-[calc(50%-8px)]">
-            <FontAwesome name="plus" size={24} color="#22c55e" />
-            <Text className="text-white font-medium mt-2">New Workout</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-surface p-4 rounded-xl shadow-sm w-[calc(50%-8px)]">
-            <FontAwesome name="calendar" size={24} color="#22c55e" />
-            <Text className="text-white font-medium mt-2">Plan Week</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-surface p-4 rounded-xl shadow-sm w-[calc(50%-8px)]">
-            <FontAwesome name="history" size={24} color="#22c55e" />
-            <Text className="text-white font-medium mt-2">History</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-surface p-4 rounded-xl shadow-sm w-[calc(50%-8px)]">
-            <FontAwesome name="cog" size={24} color="#22c55e" />
-            <Text className="text-white font-medium mt-2">Settings</Text>
+          <TouchableOpacity
+            className="bg-surface-light p-3 rounded-full"
+            onPress={() => router.push('/profile')}
+          >
+            <FontAwesome name="user" size={24} color="#22c55e" />
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+
+      <ScrollView className="flex-1 p-4">
+        {/* Today's Workout */}
+        <View className="bg-surface rounded-xl p-4 mb-6">
+          <Text className="text-xl font-bold text-white mb-2">
+            Today's Workout
+          </Text>
+          {todaysWorkout ? (
+            <>
+              <Text className="text-gray-300 mb-4">{todaysWorkout.name}</Text>
+              <TouchableOpacity
+                className="bg-accent py-4 rounded-lg items-center"
+                onPress={startWorkout}
+              >
+                <Text className="text-white font-bold text-lg">Start</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text className="text-gray-300">No workout scheduled</Text>
+          )}
+        </View>
+
+        {/* Quick Actions */}
+        <Text className="text-xl font-bold text-white mb-4">Quick Actions</Text>
+        <View className="flex-row flex-wrap justify-between">
+          <TouchableOpacity
+            className="bg-surface w-[48%] p-4 rounded-xl mb-4"
+            onPress={() => router.push('/workouts')}
+          >
+            <FontAwesome name="list" size={24} color="#22c55e" />
+            <Text className="text-white font-medium mt-2">Workouts</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-surface w-[48%] p-4 rounded-xl mb-4"
+            onPress={() => router.push('/progress')}
+          >
+            <FontAwesome name="line-chart" size={24} color="#22c55e" />
+            <Text className="text-white font-medium mt-2">Progress</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }

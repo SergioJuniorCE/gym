@@ -10,17 +10,14 @@ export type Workout = {
 export type Exercise = {
   id: string;
   name: string;
-  reps: string;
-  weight: string;
-  restTime: string;
-  completed: boolean;
   sets: Set[];
+  reps: number;
 };
 
 export type Set = {
   id: string;
-  reps: string;
-  weight: string;
+  reps: number;
+  weight: number;
   completed: boolean;
 };
 

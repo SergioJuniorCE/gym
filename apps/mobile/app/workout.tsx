@@ -4,11 +4,14 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
+  Pressable,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { api, type Workout } from '../src/lib/api';
+import * as Haptics from 'expo-haptics';
 
 export default function Workout() {
   const router = useRouter();
@@ -24,6 +27,7 @@ export default function Workout() {
     exerciseIndex: number;
     setIndex: number;
   } | null>(null);
+  const [pressedButton, setPressedButton] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -43,6 +47,45 @@ export default function Workout() {
     }
   };
 
+  const updateSets = async (
+    exerciseIndex: number,
+    setIndex: number,
+    change: number
+  ) => {
+    if (!workout) return;
+
+    const updatedWorkout = { ...workout };
+    const currentSets = updatedWorkout.exercises[exerciseIndex].sets.length;
+    const newSets = Math.max(1, currentSets + change);
+
+    // Add or remove sets while maintaining the same reps and weight
+    const templateSet = updatedWorkout.exercises[exerciseIndex].sets[0];
+    if (change > 0) {
+      // Add new sets
+      for (let i = currentSets; i < newSets; i++) {
+        updatedWorkout.exercises[exerciseIndex].sets.push({
+          id: `set-${i + 1}`,
+          reps: templateSet.reps,
+          weight: templateSet.weight,
+          completed: false,
+        });
+      }
+    } else {
+      // Remove sets
+      updatedWorkout.exercises[exerciseIndex].sets = updatedWorkout.exercises[
+        exerciseIndex
+      ].sets.slice(0, newSets);
+    }
+
+    try {
+      const savedWorkout = await api.updateWorkout(workout.id, updatedWorkout);
+      setWorkout(savedWorkout);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (err) {
+      console.error('Failed to update sets:', err);
+    }
+  };
+
   const completeSet = async (exerciseIndex: number, setIndex: number) => {
     if (!workout) return;
 
@@ -53,6 +96,7 @@ export default function Workout() {
       const savedWorkout = await api.updateWorkout(workout.id, updatedWorkout);
       setWorkout(savedWorkout);
       setLastCompletedSet({ exerciseIndex, setIndex });
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       // Move to next set or exercise
       if (setIndex < workout.exercises[exerciseIndex].sets.length - 1) {
@@ -71,21 +115,43 @@ export default function Workout() {
   const uncompleteSet = async () => {
     if (!workout || !lastCompletedSet) return;
 
-    const { exerciseIndex, setIndex } = lastCompletedSet;
-    const updatedWorkout = { ...workout };
-    updatedWorkout.exercises[exerciseIndex].sets[setIndex].completed = false;
+    Alert.alert(
+      'Undo Set',
+      'Are you sure you want to undo the last completed set?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Undo',
+          onPress: async () => {
+            const { exerciseIndex, setIndex } = lastCompletedSet;
+            const updatedWorkout = { ...workout };
+            updatedWorkout.exercises[exerciseIndex].sets[setIndex].completed =
+              false;
 
-    try {
-      const savedWorkout = await api.updateWorkout(workout.id, updatedWorkout);
-      setWorkout(savedWorkout);
-      setLastCompletedSet(null);
-      setCurrentExerciseIndex(exerciseIndex);
-      setCurrentSetIndex(setIndex);
-      setIsResting(false);
-      setRestTimeLeft(90);
-    } catch (err) {
-      console.error('Failed to uncomplete set:', err);
-    }
+            try {
+              const savedWorkout = await api.updateWorkout(
+                workout.id,
+                updatedWorkout
+              );
+              setWorkout(savedWorkout);
+              setLastCompletedSet(null);
+              setCurrentExerciseIndex(exerciseIndex);
+              setCurrentSetIndex(setIndex);
+              setIsResting(false);
+              setRestTimeLeft(90);
+              await Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning
+              );
+            } catch (err) {
+              console.error('Failed to uncomplete set:', err);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const switchToSet = (exerciseIndex: number, setIndex: number) => {
@@ -122,6 +188,32 @@ export default function Workout() {
   const currentExercise = workout.exercises[currentExerciseIndex];
   const currentSet = currentExercise?.sets[currentSetIndex];
 
+  const getButtonStyle = (buttonType: string) => {
+    const baseStyle = 'flex-1 py-2 rounded-lg items-center border';
+    const isPressed = pressedButton === buttonType;
+
+    switch (buttonType) {
+      case 'decrease':
+        return `${baseStyle} bg-surface-light border-primary-dark ${
+          isPressed ? 'bg-surface' : ''
+        }`;
+      case 'complete':
+        return `${baseStyle} bg-accent border-transparent ${
+          isPressed ? 'bg-accent-dark' : ''
+        }`;
+      case 'undo':
+        return `${baseStyle} bg-surface-light border-primary-dark ${
+          isPressed ? 'bg-surface' : ''
+        }`;
+      case 'increase':
+        return `${baseStyle} bg-surface-light border-primary-dark ${
+          isPressed ? 'bg-surface' : ''
+        }`;
+      default:
+        return baseStyle;
+    }
+  };
+
   return (
     <View className="flex-1 bg-primary">
       {/* Header */}
@@ -155,39 +247,49 @@ export default function Workout() {
                 <Text className="text-accent font-bold">{restTimeLeft}s</Text>
               </View>
             </View>
-            {lastCompletedSet ? (
-              <View className="space-y-2">
-                <TouchableOpacity
-                  className="bg-accent py-4 rounded-lg items-center"
+            <View className="flex-row justify-between space-x-2">
+              <Pressable
+                className={getButtonStyle('decrease')}
+                onPressIn={() => setPressedButton('decrease')}
+                onPressOut={() => setPressedButton(null)}
+                onPress={() =>
+                  updateSets(currentExerciseIndex, currentSetIndex, -1)
+                }
+              >
+                <Text className="text-white font-bold text-xl">-</Text>
+              </Pressable>
+              {lastCompletedSet ? (
+                <Pressable
+                  className={getButtonStyle('undo')}
+                  onPressIn={() => setPressedButton('undo')}
+                  onPressOut={() => setPressedButton(null)}
+                  onPress={uncompleteSet}
+                >
+                  <Text className="text-white font-bold">Undo</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  className={getButtonStyle('complete')}
+                  onPressIn={() => setPressedButton('complete')}
+                  onPressOut={() => setPressedButton(null)}
                   onPress={() =>
                     completeSet(currentExerciseIndex, currentSetIndex)
                   }
                 >
-                  <Text className="text-white font-bold text-lg">
-                    Complete Set
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="bg-surface-light py-4 rounded-lg items-center border border-primary-dark"
-                  onPress={uncompleteSet}
-                >
-                  <Text className="text-white font-bold text-lg">
-                    Undo Last Set
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                className="bg-accent py-4 rounded-lg items-center"
+                  <Text className="text-white font-bold">Complete</Text>
+                </Pressable>
+              )}
+              <Pressable
+                className={getButtonStyle('increase')}
+                onPressIn={() => setPressedButton('increase')}
+                onPressOut={() => setPressedButton(null)}
                 onPress={() =>
-                  completeSet(currentExerciseIndex, currentSetIndex)
+                  updateSets(currentExerciseIndex, currentSetIndex, 1)
                 }
               >
-                <Text className="text-white font-bold text-lg">
-                  Complete Set
-                </Text>
-              </TouchableOpacity>
-            )}
+                <Text className="text-white font-bold text-xl">+</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* Exercise List */}
